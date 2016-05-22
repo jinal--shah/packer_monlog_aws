@@ -1,0 +1,92 @@
+{
+  "variables": {
+    "ami_description": "{{env `AMI_DESCRIPTION`}}",
+    "ami_name": "{{env `AMI_NAME`}}",
+    "ami_os": "{{env `AMI_OS`}}",
+    "ami_os_release": "{{env `AMI_OS_RELEASE`}}",
+    "ami_source_id": "{{env `AMI_SOURCE_ID`}}",
+    "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_instance_type": "{{env `AWS_INSTANCE_TYPE`}}",
+    "aws_region": "{{env `AWS_REGION`}}",
+    "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "build_git_branch": "{{env `BUILD_GIT_BRANCH`}}",
+    "build_git_org": "{{env `BUILD_GIT_ORG`}}",
+    "build_git_repo": "{{env `BUILD_GIT_REPO`}}",
+    "build_git_sha": "{{env `BUILD_GIT_SHA`}}",
+    "build_time": "{{env `BUILD_TIME`}}",
+    "ssh_keypair_name": "{{env `SSH_KEYPAIR_NAME`}}",
+    "ssh_private_key_file": "{{env `SSH_PRIVATE_KEY_FILE`}}",
+    "ssh_username": "{{env `SSH_USERNAME`}}"
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key_id`}}",
+      "ami_description": "{{user `ami_description`}}",
+      "ami_name": "{{user `ami_name`}}",
+      "force_deregister": "true",
+      "instance_type": "{{user `aws_instance_type`}}",
+      "launch_block_device_mappings": [{
+        "device_name": "/dev/sda1",
+        "delete_on_termination": true,
+        "volume_size": "8"
+      }],
+      "region": "{{user `aws_region`}}",
+      "secret_key": "{{user `aws_secret_access_key`}}",
+      "source_ami": "{{user `ami_source_id`}}",
+      "ssh_keypair_name": "{{user `ssh_keypair_name`}}",
+      "ssh_private_key_file": "{{user `ssh_private_key_file`}}",
+      "ssh_pty" : "true",
+      "ssh_username": "{{user `ssh_username`}}",
+      "tags": {
+        "ami_source_id": "{{user `ami_source_id` }}",
+        "build_git_branch": "{{user `build_git_branch`}}",
+        "build_git_org": "{{user `build_git_org`}}",
+        "build_git_repo": "{{user `build_git_repo`}}",
+        "build_git_sha": "{{user `build_git_sha`}}",
+        "build_time": "{{user `build_time`}}",
+        "channel": "dev",
+        "os": "{{user `ami_os`}}",
+        "os_release": "{{user `ami_os_release`}}"
+      }
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "uploads",
+      "destination": "/tmp"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/install_netdata.sh",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/install_alertlogic.sh",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/add_metrics_client_config.sh",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "# THINGS TO DO LAST OF ALL ...",
+        "# ... pkgs update",
+        "sudo yum -y upgrade",
+        "# ... deliver cloud-init scripts and make executable",
+        "sudo cp -r /tmp/uploads/cloud-init/* / || true",
+        "sudo chmod a+x /usr/local/bin/cloud-init/[0-9][0-9][0-9][0-9][0-9]-* || true",
+        "# ... delete uploads dir on remote",
+        "sudo rm -rf /tmp/uploads"
+      ]
+    }
+  ],
+
+  "post-processors": []
+}
