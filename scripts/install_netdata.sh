@@ -29,6 +29,8 @@ REQUIRED_PKGS="
     curl
     nodejs
 "
+
+NETDATA_GIT_TAG=v1.2.0
 NETDATA_DISABLE_LOGS=${NETDATA_DISABLE_LOGS:-1}
 
 TMP_PKGS_TO_ERASE=""
@@ -51,7 +53,11 @@ if [[ ! -d $UPLOADS ]]; then
     exit 1
 fi
 
-rc=0
+echo "$0 INFO: ... checking epel repo is available"
+if [[ ! -r /etc/yum.repos.d/epel.repo ]]; then
+    echo "$0 ERROR: ... epel repo must be installed (even if disabled)"
+    exit 1
+fi
 
 echo "$0 INFO: ... determining which tmp pkgs can be deleted after installing netdata"
 for my_pkg in $TMP_PKGS; do
@@ -65,11 +71,11 @@ for my_pkg in $TMP_PKGS; do
 done
 
 echo "$0 INFO: installing netdata."
-yum install -y $TMP_PKGS $REQUIRED_PKGS                       \
+yum install -y $TMP_PKGS $REQUIRED_PKGS --enablerepo epel     \
 && cd /var/tmp                                                \
 && git clone https://github.com/firehol/netdata.git --depth=1 \
 && cd netdata                                                 \
-&& git checkout v.1.2.0                                       \
+&& git checkout $NETDATA_GIT_TAG                              \
 && ./netdata-installer.sh <<< $'\n'                           \
 && yum remove -y $TMP_PKGS_TO_ERASE
 
@@ -90,12 +96,12 @@ then
     else
         echo "$0 ERROR: ... curling localhost:19999 did not bring back netdata."
         echo "$0 ERROR: Installation unsuccessful."
-        rc=1
+        exit 1
     fi
 else
     echo "$0 ERROR: ... can't find netdata process running."
     echo "$0 ERROR: Installation unsuccessful."
-    rc=1
+    exit 1
 fi
 
 # DISABLE all netdata logs - we don't care enough to logrotate ...
@@ -110,5 +116,6 @@ fi
 # ... copy over overlay files and shutdown
 cp -r $UPLOADS/* /
 chkconfig netdata on
+service netdata stop
 
-exit $rc
+exit 0

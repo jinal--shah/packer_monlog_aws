@@ -1,6 +1,8 @@
 # vim: ts=4 st=4 sr noet smartindent:
 #
 MANDATORY_VARS=           \
+	ALERTLOGIC_HOST       \
+	ALERTLOGIC_KEY        \
 	AMI_NAME              \
 	AWS_ACCESS_KEY_ID     \
 	AWS_INSTANCE_TYPE     \
@@ -37,6 +39,8 @@ export SSH_USERNAME=ec2-user
 # PACKER_DEBUG: set to -debug for breakpoint mode. BUT, BUT, BUT ...
 #               THERE IS A BUG IN PACKER 0.10.0 - DEBUG WILL HANG
 #
+export ALERTLOGIC_HOST?=
+export ALERTLOGIC_KEY?=
 AMI_SOURCE_GIT_ORG?=EurostarDigital
 AMI_SOURCE_GIT_BRANCH?=*
 AMI_SOURCE_CHANNEL?=stable

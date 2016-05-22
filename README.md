@@ -22,6 +22,14 @@ will serve.
 * Packer runs a few scripts under the yawn-inducingly-named scripts dir to
   provide the basic ami env.
 
+## NON-STANDARD MAKE ENV VARS
+
+Below are vars that can / should be passed to _make_ in this packer layer only.
+
+* ALERTLOGIC_HOST: used to install alertlogic
+
+* ALERTLOGIC_KEY: used to install alertlogic
+
 ## CHANGES WORKFLOW
 
 * make a git branch from master.
@@ -34,7 +42,7 @@ will serve.
 
 * After it passes testing, merge to master.
 
-* *On successful testing, the AMI's channel tag should be set to  _stable_.*
+* **On successful testing, the AMI's channel tag should be set to  _stable_.**
 
   _Obviously, this should be automated ..._
 

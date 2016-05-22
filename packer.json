@@ -1,5 +1,7 @@
 {
   "variables": {
+    "alertlogic_host": "{{env `ALERTLOGIC_HOST`}}",
+    "alertlogic_key": "{{env `ALERTLOGIC_KEY`}}",
     "ami_description": "{{env `AMI_DESCRIPTION`}}",
     "ami_name": "{{env `AMI_NAME`}}",
     "ami_os": "{{env `AMI_OS`}}",
@@ -66,6 +68,10 @@
     {
       "type": "shell",
       "script": "scripts/install_alertlogic.sh",
+      "environment_vars": [
+        "ALERTLOGIC_HOST={{user `alertlogic_host`}}",
+        "ALERTLOGIC_KEY={{user `alertlogic_key`}}"
+      ],
       "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E {{ .Path }}"
     },
     {
@@ -80,8 +86,8 @@
         "# ... pkgs update",
         "sudo yum -y upgrade",
         "# ... deliver cloud-init scripts and make executable",
-        "sudo cp -r /tmp/uploads/cloud-init/* / || true",
-        "sudo chmod a+x /usr/local/bin/cloud-init/[0-9][0-9][0-9][0-9][0-9]-* || true",
+        "sudo cp -r /tmp/uploads/cloud-init/* /",
+        "sudo chmod a+x /usr/local/bin/cloud-init/[0-9][0-9][0-9][0-9][0-9]-*",
         "# ... delete uploads dir on remote",
         "sudo rm -rf /tmp/uploads"
       ]
