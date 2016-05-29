@@ -20,18 +20,18 @@ MANDATORY_VARS=           \
 # ### CONSTANTS (not user-defineable)
 # SSH_PRIVATE_KEY_FILE ... for build this is the AWS dev account's 'eurostar' key
 #
-GIT_SHA_LEN=8
-PACKER_JSON=packer.json
-AMI_PREFIX=eurostar_monlog
-export AMI_DESC_TXT=yum updates;netdata;alertlogic;collectd;rsyslog;statsite
-AMI_SOURCE_OS=centos
-AMI_SOURCE_OS_RELEASE=6.5
-AMI_SOURCE_PREFIX=eurostar_aws
-export AMI_SOURCE_FILTER=*/$(AMI_SOURCE_PREFIX)-*
-export SHELL=/bin/bash
-export SSH_KEYPAIR_NAME=eurostar
-export SSH_PRIVATE_KEY_FILE=eurostar.pem
-export SSH_USERNAME=ec2-user
+GIT_SHA_LEN:=8
+PACKER_JSON:=packer.json
+AMI_PREFIX:=eurostar_monlog
+export AMI_DESC_TXT:=yum updates;netdata;alertlogic;collectd;rsyslog;statsite
+AMI_SOURCE_OS:=centos
+AMI_SOURCE_OS_RELEASE:=6.5
+AMI_SOURCE_PREFIX:=eurostar_aws
+export AMI_SOURCE_FILTER:=*/$(AMI_SOURCE_PREFIX)-*
+export SHELL:=/bin/bash
+export SSH_KEYPAIR_NAME:=eurostar
+export SSH_PRIVATE_KEY_FILE:=eurostar.pem
+export SSH_USERNAME:=ec2-user
 
 # ### VARS (user-defineable)
 # AMI_SOURCE_*: used to determine source ami.
@@ -52,7 +52,7 @@ export AWS_ACCESS_KEY_ID?=
 export AWS_INSTANCE_TYPE?=t2.small
 export AWS_REGION?=eu-west-1
 export AWS_SECRET_ACCESS_KEY?=
-export PACKER_DEBUG=
+export PACKER_DEBUG?=
 export PACKER_LOG?=
 export PACKER_DIR?=./
 
@@ -64,30 +64,30 @@ export PACKER_DIR?=./
 #
 # ... to rebuild using same version of tools, we can't trust the git tag
 # but the branch, sha and repo, because git tags are mutable and movable.
-export BUILD_GIT_TAG=$(shell git describe --exact-match HEAD 2>/dev/null)
+export BUILD_GIT_TAG:=$(shell git describe --exact-match HEAD 2>/dev/null)
 ifeq ($(BUILD_GIT_TAG),)
-	export BUILD_GIT_BRANCH=$(shell git describe --contains --all HEAD)
+	export BUILD_GIT_BRANCH:=$(shell git describe --contains --all HEAD)
 else
-	export BUILD_GIT_BRANCH=detached_head
+	export BUILD_GIT_BRANCH:=detached_head
 endif
-export BUILD_GIT_SHA=$(shell git rev-parse --short=$(GIT_SHA_LEN) --verify HEAD)
-export BUILD_GIT_REPO=$(shell   \
+export BUILD_GIT_SHA:=$(shell git rev-parse --short=$(GIT_SHA_LEN) --verify HEAD)
+export BUILD_GIT_REPO:=$(shell   \
 	git remote show -n origin   \
 	| grep '^ *Push *'          \
 	| awk {'print $$NF'}        \
 )
-export BUILD_GIT_ORG=$(shell \
+export BUILD_GIT_ORG:=$(shell \
 	echo $(BUILD_GIT_REPO)   \
 	| sed -e 's!.*[:/]\([^/]\+\)/.*!\1!' \
 )
 
-AMI_NAME_GIT_INFO=$(BUILD_GIT_BRANCH)-$(BUILD_GIT_SHA)
+AMI_NAME_GIT_INFO:=$(BUILD_GIT_BRANCH)-$(BUILD_GIT_SHA)
 
-export BUILD_TIME=$(shell date +%Y%m%d%H%M%S)
+export BUILD_TIME:=$(shell date +%Y%m%d%H%M%S)
 
-AWS_TAG_SOURCE_OS_INFO=os<$(AMI_SOURCE_OS)>os_release<$(AMI_SOURCE_OS_RELEASE)>
-AWS_TAG_SOURCE_GIT_INFO=repo<$(AMI_SOURCE_GIT_REPO)>branch<$(AMI_SOURCE_GIT_BRANCH)>
-AWS_TAG_SOURCE_GIT_REF=tag<$(AMI_SOURCE_GIT_TAG)>sha<$(AMI_SOURCE_GIT_SHA)>
+AWS_TAG_SOURCE_OS_INFO:=os<$(AMI_SOURCE_OS)>os_release<$(AMI_SOURCE_OS_RELEASE)>
+AWS_TAG_SOURCE_GIT_INFO:=repo<$(AMI_SOURCE_GIT_REPO)>branch<$(AMI_SOURCE_GIT_BRANCH)>
+AWS_TAG_SOURCE_GIT_REF:=tag<$(AMI_SOURCE_GIT_TAG)>sha<$(AMI_SOURCE_GIT_SHA)>
 export AMI_SOURCE_ID?=$(shell                                            \
 	aws --cli-read-timeout 10 ec2 describe-images --region $(AWS_REGION) \
 	--filters 'Name=manifest-location,Values=$(AMI_SOURCE_FILTER)'       \
@@ -102,7 +102,7 @@ export AMI_SOURCE_ID?=$(shell                                            \
 
 # ... value of source ami's ami_sources tag used as prefix for this ami's sources tag
 #     to show provenance.
-export AMI_PREVIOUS_SOURCES=$(shell                                      \
+export AMI_PREVIOUS_SOURCES:=$(shell                                     \
 	aws --cli-read-timeout 10 ec2 describe-tags --region $(AWS_REGION)   \
 	--filters 'Name=resource-id,Values=$(AMI_SOURCE_ID)'                 \
 	          'Name=key,Values=ami_sources'                              \
@@ -111,16 +111,16 @@ export AMI_PREVIOUS_SOURCES=$(shell                                      \
 )
 
 # ... this ami's os and release num should be the same as it's source
-export AMI_OS=$(AMI_SOURCE_OS)
-export AMI_OS_RELEASE=$(AMI_SOURCE_OS_RELEASE)
-export AMI_OS_INFO=$(AMI_OS)-$(AMI_OS_RELEASE)
-export AMI_DESCRIPTION=$(AMI_OS_INFO): $(AMI_DESC_TXT)
-export AMI_NAME=$(AMI_PREFIX)-$(AMI_OS_INFO)-$(BUILD_GIT_ORG)-$(BUILD_TIME)
+export AMI_OS:=$(AMI_SOURCE_OS)
+export AMI_OS_RELEASE:=$(AMI_SOURCE_OS_RELEASE)
+export AMI_OS_INFO:=$(AMI_OS)-$(AMI_OS_RELEASE)
+export AMI_DESCRIPTION:=$(AMI_OS_INFO): $(AMI_DESC_TXT)
+export AMI_NAME:=$(AMI_PREFIX)-$(AMI_OS_INFO)-$(BUILD_GIT_ORG)-$(BUILD_TIME)
 
-export AWS_TAG_AMI_SOURCES=$(AMI_PREVIOUS_SOURCES)<$(AMI_SOURCE_PREFIX):$(AMI_SOURCE_ID)>
-export AWS_TAG_BUILD_GIT_INFO=repo<$(BUILD_GIT_REPO)>branch<$(BUILD_GIT_BRANCH)>
-export AWS_TAG_BUILD_GIT_REF=tag<$(BUILD_GIT_TAG)>sha<$(BUILD_GIT_SHA)>
-export AWS_TAG_OS_INFO=$(AWS_TAG_SOURCE_OS_INFO)
+export AWS_TAG_AMI_SOURCES:=$(AMI_PREVIOUS_SOURCES)<$(AMI_SOURCE_PREFIX):$(AMI_SOURCE_ID)>
+export AWS_TAG_BUILD_GIT_INFO:=repo<$(BUILD_GIT_REPO)>branch<$(BUILD_GIT_BRANCH)>
+export AWS_TAG_BUILD_GIT_REF:=tag<$(BUILD_GIT_TAG)>sha<$(BUILD_GIT_SHA)>
+export AWS_TAG_OS_INFO:=$(AWS_TAG_SOURCE_OS_INFO)
 
 export PACKER?=$(shell which packer)
 
