@@ -14,3 +14,7 @@ for this_script in $SCRIPTS; do
     echo "$0 INFO: .... executing $this_script"
     env $this_script
 done
+
+rm -rf /tmp/scripts
+
+exit 0

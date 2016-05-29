@@ -26,7 +26,8 @@ AMI_PREFIX=eurostar_monlog
 export AMI_DESC_TXT=yum updates;netdata;alertlogic;collectd;rsyslog;statsite
 AMI_SOURCE_OS=centos
 AMI_SOURCE_OS_RELEASE=6.5
-export AMI_SOURCE_FILTER=*/eurostar_aws-*
+AMI_SOURCE_PREFIX=eurostar_aws
+export AMI_SOURCE_FILTER=*/$(AMI_SOURCE_PREFIX)-*
 export SHELL=/bin/bash
 export SSH_KEYPAIR_NAME=eurostar
 export SSH_PRIVATE_KEY_FILE=eurostar.pem
@@ -51,7 +52,6 @@ export AWS_ACCESS_KEY_ID?=
 export AWS_INSTANCE_TYPE?=t2.small
 export AWS_REGION?=eu-west-1
 export AWS_SECRET_ACCESS_KEY?=
-export BUILD_GIT_TAG?=
 export PACKER_DEBUG=
 export PACKER_LOG?=
 export PACKER_DIR?=./
@@ -64,7 +64,12 @@ export PACKER_DIR?=./
 #
 # ... to rebuild using same version of tools, we can't trust the git tag
 # but the branch, sha and repo, because git tags are mutable and movable.
-export BUILD_GIT_BRANCH=$(shell git describe --contains --all HEAD)
+export BUILD_GIT_TAG=$(shell git describe --exact-match HEAD 2>/dev/null)
+ifeq ($(BUILD_GIT_TAG),)
+	export BUILD_GIT_BRANCH=$(shell git describe --contains --all HEAD)
+else
+	export BUILD_GIT_BRANCH=detached_head
+endif
 export BUILD_GIT_SHA=$(shell git rev-parse --short=$(GIT_SHA_LEN) --verify HEAD)
 export BUILD_GIT_REPO=$(shell   \
 	git remote show -n origin   \
@@ -87,8 +92,8 @@ export AMI_SOURCE_ID?=$(shell                                            \
 	aws --cli-read-timeout 10 ec2 describe-images --region $(AWS_REGION) \
 	--filters 'Name=manifest-location,Values=$(AMI_SOURCE_FILTER)'       \
 	          'Name=tag:os_info,Values=$(AWS_TAG_SOURCE_OS_INFO)'        \
-	          'Name=tag:git_info,Values=$(AWS_TAG_SOURCE_GIT_INFO)'      \
-	          'Name=tag:git_ref,Values=$(AWS_TAG_SOURCE_GIT_REF)'        \
+	          'Name=tag:build_git_info,Values=$(AWS_TAG_SOURCE_GIT_INFO)'\
+	          'Name=tag:build_git_ref,Values=$(AWS_TAG_SOURCE_GIT_REF)'  \
 	          'Name=tag:channel,Values=$(AMI_SOURCE_CHANNEL)'            \
 	--query 'Images[*].[ImageId,CreationDate]'                           \
 	--output text                                                        \
@@ -98,7 +103,7 @@ export AMI_SOURCE_ID?=$(shell                                            \
 # ... value of source ami's ami_sources tag used as prefix for this ami's sources tag
 #     to show provenance.
 export AMI_PREVIOUS_SOURCES=$(shell                                      \
-	aws --cli-read-timeout 10 ec2 describe-images --region $(AWS_REGION) \
+	aws --cli-read-timeout 10 ec2 describe-tags --region $(AWS_REGION)   \
 	--filters 'Name=resource-id,Values=$(AMI_SOURCE_ID)'                 \
 	          'Name=key,Values=ami_sources'                              \
 	--query 'Tags[*].Value'                                              \
@@ -112,10 +117,10 @@ export AMI_OS_INFO=$(AMI_OS)-$(AMI_OS_RELEASE)
 export AMI_DESCRIPTION=$(AMI_OS_INFO): $(AMI_DESC_TXT)
 export AMI_NAME=$(AMI_PREFIX)-$(AMI_OS_INFO)-$(BUILD_TIME)-$(AMI_NAME_GIT_INFO)
 
-export AWS_TAG_OS_INFO=$(AWS_TAG_SOURCE_OS_INFO)
+export AWS_TAG_AMI_SOURCES=$(AMI_PREVIOUS_SOURCES)<$(AMI_SOURCE_PREFIX):$(AMI_SOURCE_ID)>
 export AWS_TAG_BUILD_GIT_INFO=repo<$(BUILD_GIT_REPO)>branch<$(BUILD_GIT_BRANCH)>
 export AWS_TAG_BUILD_GIT_REF=tag<$(BUILD_GIT_TAG)>sha<$(BUILD_GIT_SHA)>
-export AWS_TAG_AMI_SOURCES=$(AMI_PREVIOUS_SOURCES)$(AMI_PREFIX)<$(AMI_SOURCE_ID)>
+export AWS_TAG_OS_INFO=$(AWS_TAG_SOURCE_OS_INFO)
 
 export PACKER?=$(shell which packer)
 
@@ -128,8 +133,8 @@ help: ## Run to show available make targets and descriptions
 	@echo $(failures)
 	@echo [INFO] Packer - Available make targets and descriptions
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST)            \
-		| sort                                                     \
-		| awk 'BEGIN {FS = ":.*?## "};{printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}';
+	    | sort                                                     \
+	    | awk 'BEGIN {FS = ":.*?## "};{printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}';
 
 .PHONY: show_env
 show_env: ## show me my environment
@@ -145,15 +150,15 @@ check_vars: ## checks mandatory vars are in make's env or fails
 .PHONY: sshkeyfile
 sshkeyfile: ## Symlink local sshkey to directory to use in Packer
 	@if [ -f ./$(SSH_PRIVATE_KEY_FILE) ];                                            \
-		then echo "[INFO] Found sshkey: ./$(SSH_PRIVATE_KEY_FILE)";                  \
+	    then echo "[INFO] Found sshkey: ./$(SSH_PRIVATE_KEY_FILE)";                  \
 	elif [ -f ~/.ssh/$(SSH_PRIVATE_KEY_FILE) ];                                      \
 	then                                                                             \
-		echo "[INFO] Found sshkey creating symlink: ~/.ssh/$(SSH_PRIVATE_KEY_FILE)"; \
-		ln -sf ~/.ssh/$(SSH_PRIVATE_KEY_FILE) ./$(SSH_PRIVATE_KEY_FILE);             \
+	    echo "[INFO] Found sshkey creating symlink: ~/.ssh/$(SSH_PRIVATE_KEY_FILE)"; \
+	    ln -sf ~/.ssh/$(SSH_PRIVATE_KEY_FILE) ./$(SSH_PRIVATE_KEY_FILE);             \
 	else                                                                             \
-		echo -e "\033[0;31m[ERROR] Create a copy of sshkey in current directory"     \
-		echo -e "(or symlink): e.g ./$(SSH_PRIVATE_KEY_FILE)\e[0m\n";                \
-		exit 1;                                                                      \
+	    echo -e "\033[0;31m[ERROR] Create a copy of sshkey in current directory"     \
+	    echo -e "(or symlink): e.g ./$(SSH_PRIVATE_KEY_FILE)\e[0m\n";                \
+	    exit 1;                                                                      \
 	fi;
 
 .PHONY: validate

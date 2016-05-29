@@ -37,6 +37,8 @@ service_start() {
     if is_running; then
         log_info "... already started"
     else
+        echo 1    >/sys/kernel/mm/ksm/run
+        echo 1000 >/sys/kernel/mm/ksm/sleep_millisecs
         log_info "... starting $NAME"
         $cmd
         echo "$(pgrep -f $cmd)" > "$pid_file"
