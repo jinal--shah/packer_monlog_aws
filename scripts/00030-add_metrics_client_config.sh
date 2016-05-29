@@ -30,7 +30,14 @@ METRICS_RPMS="
     collectd-utils
     statsite
 "
-YUM_METRICS_CONF=etc/yum.repos.d/metrics.repo
+
+function is_installed {
+    if yum list installed "$@" >/dev/null 2>&1; then
+        true
+    else
+        false
+    fi
+}
 
 echo "$0 INFO: ... installing metrics clients"
 echo "$0 INFO: ... checking required files uploaded"
@@ -41,12 +48,23 @@ if [[ ! -d $UPLOADS ]]; then
 fi
 
 # ... install
-cp $UPLOADS/$YUM_METRICS_CONF /$METRICS_YUM_CONF \
+cp $UPLOADS/$METRICS_YUM_CONF /$METRICS_YUM_CONF \
 && yum-config-manager --enable eurostar_prod     \
 && yum -y install $METRICS_RPMS                  \
 && mkdir -p /etc/collectd.d                      \
 && cp -r $UPLOADS/* /                            \
 && yum-config-manager --disable eurostar_prod
+
+# ... check pkgs are installed
+for pkg in $METRICS_RPMS; do
+    if ! is_installed $pkg
+    then
+        echo "$0 ERROR: pkg $pkg not installed ..." >&2
+        rc=1
+    fi
+done
+
+[[ $rc -eq 1 ]] && exit 1
 
 # ... can't verify until instance is up and service configured
 for service in carbon-c-relay collectd statsite; do
