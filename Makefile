@@ -71,17 +71,15 @@ else
 	export BUILD_GIT_BRANCH:=detached_head
 endif
 export BUILD_GIT_SHA:=$(shell git rev-parse --short=$(GIT_SHA_LEN) --verify HEAD)
-export BUILD_GIT_REPO:=$(shell   \
-	git remote show -n origin   \
-	| grep '^ *Push *'          \
-	| awk {'print $$NF'}        \
+export BUILD_GIT_REPO:=$(shell \
+	git remote show -n origin  \
+	| grep '^ *Push *'         \
+	| awk {'print $$NF'}       \
 )
 export BUILD_GIT_ORG:=$(shell \
 	echo $(BUILD_GIT_REPO)   \
 	| sed -e 's!.*[:/]\([^/]\+\)/.*!\1!' \
 )
-
-AMI_NAME_GIT_INFO:=$(BUILD_GIT_BRANCH)-$(BUILD_GIT_SHA)
 
 export BUILD_TIME:=$(shell date +%Y%m%d%H%M%S)
 
