@@ -12,7 +12,7 @@ for this_script in $SCRIPTS; do
         chmod a+x $this_script
     fi
     echo "$0 INFO: .... executing $this_script"
-    env $this_script
+    env $this_script || exit 1
 done
 
 rm -rf /tmp/scripts
