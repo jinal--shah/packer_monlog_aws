@@ -9,7 +9,7 @@
 # * RPMs to provide these services:
 #   * statsite (statsd replacement),
 #   * collectd,
-#   * carbon relay (which feeds to REMOTE_METRICS_HOST:REMOTE_METRICS_PORT)
+#   * carbon relay (which feeds to METRICS_REMOTE_HOST:METRICS_REMOTE_PORT)
 #
 # The services will be turned off by default.
 # On instance-up we expect the carbon-c-relay to be configured correctly

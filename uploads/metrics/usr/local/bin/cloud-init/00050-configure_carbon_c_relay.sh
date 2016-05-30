@@ -32,7 +32,7 @@ SUBSTITUTION_TOKENS="
 INFO_FILES="
     /etc/eurostar/aws_instance_info
     /etc/eurostar/eurostar_service_info
-    /etc/eurostar/remote_metrics_info
+    /etc/eurostar/metrics_remote_info
 "
 FAILED_VALIDATION=''
 
