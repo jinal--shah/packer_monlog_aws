@@ -56,27 +56,26 @@ Below are vars that can / should be passed to _make_ in this packer layer only.
 
 The resulting AMI is named:
 
-        eurostar_monlog-<os info>-<build time>-<src's git sha>-<src's git branch>
+        eurostar_monlog-<os info>-<build git org>-<build time>
 
         e.g.
 
-        eurostar_monlog-centos-6.5-20160522105037-0ad9aa7a-master
+        eurostar_monlog-centos-6.5-EurostarDigital-20160522105037
 
 See generated value $AMI_NAME in Makefile for more details.
 
 ## DISCOVERY
 
-        e.g. find ami_id for latest stable centos from a EurostarDigital master branch:
-
-        aws --cli-read-timeout 10 ec2 describe-images --region $AWS_REGION     \
-            --filter 'Name=manifest-location,Values=*/eurostar_monlog-centos*' \
-            --filter 'Name=tag:build_git_org,Values=EurostarDigital'           \
-            --filter 'Name=tag:build_git_branch,Values=master'                 \
-            --filter 'Name=tag:channel,Values=stable'                          \
-            --query 'Images[*].[ImageId,CreationDate]'                         \
-            --output text                                                      \
+        e.g. find ami_id for latest stable from a EurostarDigital master branch:
+        GIT_INFO="repo<*EurostarDigital/*>branch<master>"
+        aws --cli-read-timeout 10 ec2 describe-images --region $AWS_REGION \
+            --filters 'Name=manifest-location,Values=*/eurostar_monlog*'   \
+                      "Name=tag:build_git_info,Values=$GIT_INFO"           \
+                      'Name=tag:channel,Values=stable'                     \
+            --query 'Images[*].[ImageId,CreationDate]'                     \
+            --output text                                                  \
             | sort -k2 | tail -1 | awk {'print $1'}
-
+        e.g. find ami_id for latest stable centos from a EurostarDigital master branch:
 
 ## MARKING AS STABLE
 
