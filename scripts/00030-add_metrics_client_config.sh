@@ -48,12 +48,12 @@ if [[ ! -d $UPLOADS ]]; then
 fi
 
 # ... install
-cp $UPLOADS/$METRICS_YUM_CONF /$METRICS_YUM_CONF \
-&& yum-config-manager --enable eurostar_prod     \
-&& yum -y install $METRICS_RPMS                  \
-&& mkdir -p /etc/collectd.d                      \
-&& cp -r $UPLOADS/* /                            \
-&& yum-config-manager --disable eurostar_prod
+cp $UPLOADS/$METRICS_YUM_CONF /$METRICS_YUM_CONF        \
+&& yum-config-manager --enable eurostar_prod >/dev/null \
+&& yum -y install $METRICS_RPMS                         \
+&& mkdir -p /etc/collectd.d                             \
+&& cp -r $UPLOADS/* /                                   \
+&& yum-config-manager --disable eurostar_prod >/dev/null
 
 # ... check pkgs are installed
 for pkg in $METRICS_RPMS; do
