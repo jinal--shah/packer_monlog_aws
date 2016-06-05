@@ -13,7 +13,9 @@ will serve.
 
 ## BUILD
 
-        # export all user-defined env vars, and then:
+        # 1. export all user-defined env vars
+        # 2. clone packer_includes in dir with this project's Makefile
+
         make build
 
 * makefile inherits values from env vars. These are transformed and / or
