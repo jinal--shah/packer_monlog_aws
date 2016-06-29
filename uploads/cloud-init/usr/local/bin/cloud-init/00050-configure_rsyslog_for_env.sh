@@ -6,11 +6,14 @@
 # to append forwarding rules to the rsyslog conf - makes sure
 # messages go where you expect.
 #
+# Also replaces tokens in all files under /etc/rsyslog.d
+# e.g. __EUROSTAR_ENV__
 
 SERVICE_NAME=rsyslog
 CONF=/etc/rsyslog.conf
 REQUIRED_VARS="
     EUROSTAR_ENV
+    EUROSTAR_SERVICE_NAME
     EUROSTAR_DOMAIN_AWS_PROD
     EUROSTAR_DOMAIN_AWS_NONPROD
 "
@@ -125,6 +128,19 @@ $RULE_BOILERPLATE_TEXT
 EOF
 
 fi
+
+
+SUBSTITUTION_TOKENS="
+    EUROSTAR_ENV
+    EUROSTAR_SERVICE_NAME
+    EUROSTAR_DOMAIN
+"
+# ... replace EUROSTAR_* tokens in all conf files
+for conf_file in $(ls -1 /etc/rsyslog.d/*.conf 2>/dev/null); do
+    for this_var in $SUBSTITUTION_TOKENS; do
+        sed -i "s/__${this_var}__/${!this_var}/" $conf_file
+    done
+done
 
 # ... (re)start $SERVICE_NAME
 chkconfig $SERVICE_NAME on
